@@ -11,21 +11,28 @@ struct EmojiArtDocumentView: View {
     
     @ObservedObject var document: EmojiArtDocument
     
+    @State private var chosenPalette: String = ""
+    
     var body: some View {
         VStack {
-            ScrollView(.horizontal) {
-                HStack {
-                    ForEach(EmojiArtDocument.palette.map { String($0) }, id: \.self) { emoji in
-                        Text(emoji)
-                            .font(Font.system(size: self.fontSize))
-                            .onDrag {
-                                return NSItemProvider(object: emoji as NSString)
-                            }
+            HStack {
+                PaletteChooser(document: document, chosenPalette: $chosenPalette)
+                ScrollView(.horizontal) {
+                    HStack {
+                        ForEach(chosenPalette.map { String($0) }, id: \.self) { emoji in
+                            Text(emoji)
+                                .font(Font.system(size: self.fontSize))
+                                .onDrag {
+                                    return NSItemProvider(object: emoji as NSString)
+                                }
+                        }
                     }
+                    
                 }
-                
+                .onAppear {
+                    self.chosenPalette = self.document.defaultPalette
+                }
             }
-            .padding(.horizontal)
             
             GeometryReader { geometry in
                 ZStack {
@@ -47,6 +54,10 @@ struct EmojiArtDocumentView: View {
                         .foregroundColor(.yellow)
                         .gesture(self.doubleTapToZoom(in: geometry.size))
                     
+                    // emoji在显示背景图之后再显示
+                    // spinning modifier
+                    
+                    
                     // TODO: emoji 没有动画
                     // 叠加文字
                     ForEach(self.document.emojis) { emoji in
@@ -60,6 +71,9 @@ struct EmojiArtDocumentView: View {
                 .gesture(self.panGuestrue())
                 .gesture(self.zoomGestrue())
                 .edgesIgnoringSafeArea([.horizontal,.bottom])
+                .onReceive(self.document.$backgroundImage) { image in
+                    self.zoomToFit(image, in: geometry.size)
+                }
                 .onDrop(of: ["public.image","public.text"], isTargeted: nil) { (provider, location) -> Bool in
                     var location = CGPoint(x: location.x, y: geometry.convert(location, from: .global).y)
                     location = CGPoint(x: location.x - geometry.size.width/2, y: location.y - geometry.size.height/2)
@@ -135,7 +149,7 @@ struct EmojiArtDocumentView: View {
     //        Font.system(size: emoji.fontSize * zoomScale)
     //    }
     
-    private func position(for emoji: EmojiArt.Emoji, in size: CGSize) -> CGPoint {
+    private func position(for emoji: EmojiArtModel.Emoji, in size: CGSize) -> CGPoint {
         var location = emoji.location
         location = CGPoint(x: location.x * zoomScale, y: location.y * zoomScale)
         location = CGPoint(x: location.x + size.width / 2, y: location.y + size.height / 2)

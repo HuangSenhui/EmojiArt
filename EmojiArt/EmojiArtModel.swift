@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct EmojiArt: Codable {
+struct EmojiArtModel: Codable {
     /// 背景图URL
     var backgroundURL: URL?
     /*①private(set)*/ var emojis: [Emoji] = []
@@ -37,7 +37,7 @@ struct EmojiArt: Codable {
     init() { }
     // decoder
     init?(json: Data?) {
-        if let js = json, let emojiArt = try? JSONDecoder().decode(EmojiArt.self, from: js) {
+        if let js = json, let emojiArt = try? JSONDecoder().decode(EmojiArtModel.self, from: js) {
             self = emojiArt
         } else {
             return nil
